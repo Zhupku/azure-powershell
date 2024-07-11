@@ -140,6 +140,20 @@ function New-AzAksArcCluster {
         # Default value is false
         ${EnableAzureRbac},
     
+        [Parameter()]
+        [Microsoft.Azure.PowerShell.Cmdlets.AksArc.Category('Body')]
+        [System.Management.Automation.SwitchParameter]
+        # Indicates whether oidc issuer is enabled.
+        # Default value is false
+        ${EnableOIDCIssuer},
+
+        [Parameter()]
+        [Microsoft.Azure.PowerShell.Cmdlets.AksArc.Category('Body')]
+        [System.Management.Automation.SwitchParameter]
+        # Indicates whether workload identity is enabled.
+        # Default value is false
+        ${EnableWorkloadIdentity},
+
         [Parameter(ParameterSetName='CreateExpanded')]
         [Microsoft.Azure.PowerShell.Cmdlets.AksArc.Category('Body')]
         [System.Int32]
@@ -451,7 +465,7 @@ function New-AzAksArcCluster {
             throw "Location parameter must be equal to custom location's location $cllocation"
         }
 
-        CreateConnectedCluster -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName -ClusterName $ClusterName -Location $Location -AdminGroupObjectID $AdminGroupObjectID -EnableAzureRbac:$EnableAzureRbac
+        CreateConnectedCluster -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName -ClusterName $ClusterName -Location $Location -AdminGroupObjectID $AdminGroupObjectID -EnableAzureRbac:$EnableAzureRbac -EnableOIDCIssuer:$EnableOIDCIssuer -EnableWorkloadIdentity:$EnableWorkloadIdentity 
         $null = $PSBoundParameters.Remove("AdminGroupObjectID")
         
         # Generate public ssh key if one is not provided

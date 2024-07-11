@@ -28,7 +28,9 @@ function CreateConnectedCluster {
         [System.String] $ClusterName, 
         [System.String] $Location,
         [System.String[]] ${AdminGroupObjectID}, 
-        [System.Management.Automation.SwitchParameter] $EnableAzureRbac
+        [System.Management.Automation.SwitchParameter] $EnableAzureRbac,
+        [System.Management.Automation.SwitchParameter] $EnableOIDCIssuer,
+        [System.Management.Automation.SwitchParameter] $EnableWorkloadIdentity
     )
 
     # Validate GUIDS
@@ -53,7 +55,17 @@ function CreateConnectedCluster {
         $EnableAzureRbacStr = "true"
     } 
 
-    $APIVersion = "2024-01-01"
+    $EnableOIDCIssuerStr = "false"
+    if ($EnableOIDCIssuer) {
+        $EnableOIDCIssuerStr = "true"
+    } 
+
+    $EnableWorkloadIdentityStr = "false"
+    if ($EnableWorkloadIdentity) {
+        $EnableWorkloadIdentityStr = "true"
+    } 
+
+    $APIVersion = "2024-06-01-preview"
     $json = 
 @"
 {
@@ -71,6 +83,14 @@ function CreateConnectedCluster {
         "aadProfile": {
             "enableAzureRBAC": $EnableAzureRbacStr, 
             "adminGroupObjectIDs": [$AdminGroupObjectIDArr]
+        },
+        "oidcIssuerProfile": {
+            "enabled": $EnableOIDCIssuerStr
+        },
+        "securityProfile": {
+            workloadIdentity: {
+                "enabled": $EnableWorkloadIdentityStr
+            }
         }
     }
 }
@@ -88,13 +108,16 @@ function UpdateConnectedCluster {
     )
 
 
-    $APIVersion = "2024-01-01"
+    $APIVersion = "2024-06-01-preview"
     $ConnectedClusterResource = Invoke-AzRestMethod -Path "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Kubernetes/connectedClusters/$ClusterName/?api-version=$APIVersion" -Method GET
 
     $Location = ($ConnectedClusterResource.Content | ConvertFrom-Json).location
     $EnableAzureRbac = ($ConnectedClusterResource.Content | ConvertFrom-Json).properties.aadProfile.enableAzureRBAC
+    $EnableOIDCIssuer = ($ConnectedClusterResource.Content | ConvertFrom-Json).properties.oidcIssuerProfile.enabled
+    $EnableWorkloadIdentity = ($ConnectedClusterResource.Content | ConvertFrom-Json).properties.securityProfile.workloadIdentity.enabled
 
-    CreateConnectedCluster -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName -ClusterName $ClusterName -Location $Location -AdminGroupObjectID $AdminGroupObjectID -EnableAzureRbac:$EnableAzureRbac
+
+    CreateConnectedCluster -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName -ClusterName $ClusterName -Location $Location -AdminGroupObjectID $AdminGroupObjectID -EnableAzureRbac:$EnableAzureRbac -EnableOIDCIssuer:$EnableOIDCIssuer -EnableWorkloadIdentity:$EnableWorkloadIdentity
 }
 
 function GenerateSSHKey {
